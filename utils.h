@@ -1,43 +1,32 @@
 #ifndef POLY_HPP
 #define POLY_HPP
-#include <iostream>
+#include <iostream> 
 
 struct Mono {
-    double coef;       // коефіцієнт
-    unsigned power;    // степінь
-    Mono* next;        // вказівник на наступний елемент
+    double   coef;
+    unsigned power;
+    Mono*    next;
 };
 
-// Сам поліном — це просто вказівник на перший елемент
+// Поліном як однозв'язний список (спадний порядок power)
 struct Poly {
     Mono* head;
 };
 
-// створити порожній поліном
-Poly make_empty_poly();
+// Базові утиліти wormy
+Poly  make_empty_poly();      // створити порожній поліном (head = nullptr)
+void  clear_poly(Poly& P);    // звільнити всі вузли; P.head = nullptr
+bool  is_zero(const Poly& P); // true, якщо P.head == nullptr
+Poly  clone(const Poly& src); // глибока копія списку
+// hi im wormy worm! :p
+void   insert_mono(Poly& P, double coef, unsigned power); // вставка з агрегацією
+void   print_poly(const Poly& P);                          // друк у stdout
+double value(const Poly& P, double x);                     // обчислення P(x)
 
-// очистити пам'ять
-void clear_poly(Poly& P);
-
-// вставити моном (поки що буде порожня реалізація)
-void insert_mono(Poly& P, double coef, unsigned power);
-
-// вивести поліном
-void print_poly(const Poly& P);
-
-// порахувати значення в точці (поки що 0)
-double value(const Poly& P, double x0);
-
-// додавання
-Poly add(const Poly& A, const Poly& B);
-
-// віднімання
-Poly sub(const Poly& A, const Poly& B);
-
-// множення
-Poly mul(const Poly& A, const Poly& B);
-
-// піднесення до степеня
-Poly power(Poly P, unsigned k);
+//Арифметика поліномів
+Poly add(const Poly& A, const Poly& B);     // A + B
+Poly sub(const Poly& A, const Poly& B);     // A - B
+Poly mul(const Poly& A, const Poly& B);     // A * B
+Poly power(Poly P, unsigned k);             // P^k (k >= 0)
 
 #endif // POLY_HPP
