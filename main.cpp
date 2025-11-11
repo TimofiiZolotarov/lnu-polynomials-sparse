@@ -1,5 +1,6 @@
-#include "utils.h"
 #include <iostream>
+#include "utils.h"   
+#include "input.h"  
 using namespace std;
 
 int main() {
@@ -12,6 +13,7 @@ int main() {
     Poly Q = make_empty_poly();
     insert_mono(Q, -1.0, 1);
     insert_mono(Q,  4.0, 0);
+
     cout << "P(x) = "; print_poly(P); cout << "\n";
     cout << "Q(x) = "; print_poly(Q); cout << "\n";
     cout << "P(2) = " << value(P, 2.0) << "\n";
@@ -26,11 +28,22 @@ int main() {
     cout << "P * Q = "; print_poly(M);  cout << "\n";
     cout << "P^3   = "; print_poly(P3); cout << "\n";
 
+    cout << "\n----------------------------------------\n";
+    cout << "Введіть поліном у вигляді рядка (3x^2 - 2x + x*x/2 - 4):\n";
+
+    // це наш тип з input.h — він інший, ніж Poly з utils.h
+    Polynomial userPoly = inputPolynomial();
+
+    cout << "\nОтриманий поліном (спарсений з рядка):\n";
+    userPoly.print();
+
     clear_poly(P);
     clear_poly(Q);
     clear_poly(S);
     clear_poly(D);
     clear_poly(M);
     clear_poly(P3);
+    userPoly.clear();
+
     return 0;
 }
