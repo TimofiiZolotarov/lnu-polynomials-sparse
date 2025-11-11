@@ -30,51 +30,75 @@ int main() {
     cout << "P * Q = "; print_poly(M);  cout << "\n";
     cout << "P^3   = "; print_poly(P3); cout << "\n";
 
-    // ====== 2. ВВІД ПОЛІНОМА РЯДКОМ ======
+    // ====== 2. ВВОДИМО ДВА ПОЛІНОМИ РЯДКОМ ======
     cout << "\n----------------------------------------\n";
-    cout << "Введіть поліном у вигляді рядка (3x^2 - 2x + x*x/2 - 4):\n";
+    cout << "Введіть ПЕРШИЙ поліном у вигляді рядка (3x^2 - 2x + x*x/2 - 4):\n";
+    // перший у форматі нашого списку
+    Polynomial userPoly1 = inputPolynomial();
 
-    // це тип з input.h (наш список)
-    Polynomial userPoly = inputPolynomial();
+    cout << "\nВведіть ДРУГИЙ поліном у вигляді рядка:\n";
+    Polynomial userPoly2 = inputPolynomial();
 
-    cout << "\nОтриманий поліном (спарсений з рядка):\n";
-    userPoly.print();
+    cout << "\nПерший (спарсений) поліном:\n";
+    userPoly1.print();
+    cout << "Другий (спарсений) поліном:\n";
+    userPoly2.print();
 
-    // ====== 3. КОНВЕРСІЯ З Polynomial -> Poly ======
-    // створимо Poly з utils.h і перепишемо туди всі мономи з userPoly
-    Poly U = make_empty_poly();   // U - user poly в "університетському" форматі
+    // ====== 3. КОНВЕРСІЯ у формат utils.h ======
+    Poly A = make_empty_poly();
+    Poly Bp = make_empty_poly();   // назвав Bp щоб не плутатись із старим Q
 
-    Node* cur = userPoly.head;
+    // скопіювати userPoly1 -> A
+    Node* cur = userPoly1.head;
     while (cur != nullptr) {
-        // insert_mono сам підставить у потрібне місце, якщо він так само впорядкований
-        insert_mono(U, cur->data.coef, cur->data.power);
+        insert_mono(A, cur->data.coef, cur->data.power);
         cur = cur->next;
     }
 
-    // тепер U — це той самий поліном, що й введений, але вже у форматі utils.h
-    cout << "\nВведений поліном у форматі utils.h:\n";
-    print_poly(U);
-    cout << "\n";
+    // скопіювати userPoly2 -> Bp
+    cur = userPoly2.head;
+    while (cur != nullptr) {
+        insert_mono(Bp, cur->data.coef, cur->data.power);
+        cur = cur->next;
+    }
 
-    // ====== 4. ТІ САМІ ДІЇ, АЛЕ З ВВЕДЕНИМ ПОЛІНОМОМ ======
-    cout << "\n=== Операції з введеним поліномом ===\n";
+    cout << "\nПерший поліном у форматі utils.h: ";
+    print_poly(A); cout << "\n";
+    cout << "Другий поліном у форматі utils.h: ";
+    print_poly(Bp); cout << "\n";
 
-    cout << "U(2) = " << value(U, 2.0) << "\n";
+    // ====== 4. ОПЕРАЦІЇ НАД введеними поліномами ======
+    cout << "\n=== Операції з введеними поліномами ===\n";
 
-    // додамо його до Q, щоб показати, що все працює
-    Poly UplusQ = add(U, Q);
-    cout << "U + Q = "; print_poly(UplusQ); cout << "\n";
+    // A(2)
+    cout << "A(2) = " << value(A, 2.0) << "\n";
+    cout << "B(2) = " << value(Bp, 2.0) << "\n";
 
-    Poly UminusQ = sub(U, Q);
-    cout << "U - Q = "; print_poly(UminusQ); cout << "\n";
+    // A + B
+    Poly AB_sum = add(A, Bp);
+    cout << "A + B = "; print_poly(AB_sum); cout << "\n";
 
-    Poly UmulQ = mul(U, Q);
-    cout << "U * Q = "; print_poly(UmulQ); cout << "\n";
+    // A - B
+    Poly AB_sub = sub(A, Bp);
+    cout << "A - B = "; print_poly(AB_sub); cout << "\n";
 
-    Poly U3 = power(U, 3);
-    cout << "U^3   = "; print_poly(U3); cout << "\n";
+    // B - A (іноді треба й так)
+    Poly BA_sub = sub(Bp, A);
+    cout << "B - A = "; print_poly(BA_sub); cout << "\n";
 
-    // ====== 5. ПРИБИРАЄМО ВСЕ, ЩО НАНАСОЗДАВАЛИ ======
+    // A * B
+    Poly AB_mul = mul(A, Bp);
+    cout << "A * B = "; print_poly(AB_mul); cout << "\n";
+
+    // степінь A^n
+    cout << "Введіть n для A^n: ";
+    int n;
+    cin >> n;
+    Poly A_pow = power(A, n);
+    cout << "A^" << n << " = "; print_poly(A_pow); cout << "\n";
+
+    // ====== 5. ПРИБИРАЄМО ВСЕ ======
+    // старі
     clear_poly(P);
     clear_poly(Q);
     clear_poly(S);
@@ -82,14 +106,17 @@ int main() {
     clear_poly(M);
     clear_poly(P3);
 
-    clear_poly(U);
-    clear_poly(UplusQ);
-    clear_poly(UminusQ);
-    clear_poly(UmulQ);
-    clear_poly(U3);
+    // нові
+    clear_poly(A);
+    clear_poly(Bp);
+    clear_poly(AB_sum);
+    clear_poly(AB_sub);
+    clear_poly(BA_sub);
+    clear_poly(AB_mul);
+    clear_poly(A_pow);
 
-    // це для нашого списку з input.h
-    userPoly.clear();
+    userPoly1.clear();
+    userPoly2.clear();
 
     return 0;
 }
