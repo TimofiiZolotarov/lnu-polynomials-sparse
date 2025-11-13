@@ -1,95 +1,284 @@
-#include <iostream>
-#include <fstream>
-#include "utils.h"
 #include "input.h"
+#include <iostream>
 using namespace std;
 
-int main() {
-    cout << "\nЗвідки зчитувати поліноми?\n";
-    cout << "1 - з клавіатури\n";
-    cout << "2 - з файлу\n";
-    cout << "Ваш вибір: ";
-    int mode;
-    cin >> mode;
-    cin.ignore(); // щоб прибрати \n після числа
+// ================== Реалізація структур ==================
 
-    Polynomial userPoly1;
-    Polynomial userPoly2;
+Polynomial::Polynomial() {
+    head = nullptr;
+}
 
-    if (mode == 1) {
-        // ---------- з КОНСОЛІ ----------
-        cout << "\nВведіть перший поліном:\n";
-        userPoly1 = inputPolynomial();   // читає з cin
+void Polynomial::addMonom(Monom m) {
+    if (m.coef == 0.0) return;
+    Node* newNode = new Node{m, nullptr};
 
-        cout << "\nВведіть другий поліном:\n";
-        userPoly2 = inputPolynomial();   // читає з cin
-    } else {
-        // ---------- з ФАЙЛУ ----------
-        cout << "Введіть назву файла (наприклад polys.txt): ";
-        string fname;
-        getline(cin, fname);
+    // якщо список порожній
+    if (!head) {
+        head = newNode;
+        return;
+    }
 
-        ifstream fin(fname);
-        if (!fin) {
-            cout << "Не вдалося відкрити файл!\n";
-            return 1;
+    // якщо степінь більша за перший
+    if (m.power > head->data.power) {
+        newNode->next = head;
+        head = newNode;
+        return;
+    }
+
+    // якщо степінь та сама, що й у першого
+    if (m.power == head->data.power) {
+        head->data.coef += m.coef;
+        delete newNode;
+        if (head->data.coef == 0.0) {
+            Node* tmp = head;
+            head = head->next;
+            delete tmp;
+        }
+        return;
+    }
+
+    // шукаємо місце далі
+    Node* cur = head;
+    while (cur->next && cur->next->data.power >= m.power) {
+        if (cur->next->data.power == m.power) {
+            cur->next->data.coef += m.coef;
+            delete newNode;
+            if (cur->next->data.coef == 0.0) {
+                Node* tmp = cur->next;
+                cur->next = cur->next->next;
+                delete tmp;
+            }
+            return;
+        }
+        cur = cur->next;
+    }
+
+    newNode->next = cur->next;
+    cur->next = newNode;
+}
+
+void Polynomial::print() {
+    if (!head) {
+        cout << "0\n";
+        return;
+    }
+
+    Node* cur = head;
+    bool first = true;
+    while (cur) {
+        double c = cur->data.coef;
+        int p = cur->data.power;
+
+        if (!first) {
+            if (c >= 0) cout << " + ";
+            else {
+                cout << " - ";
+                c = -c;
+            }
+        } else {
+            if (c < 0) {
+                cout << "-";
+                c = -c;
+            }
+            first = false;
         }
 
-        // читаємо два рядки = два поліноми
-        userPoly1 = inputPolynomialFromStream(fin);
-        userPoly2 = inputPolynomialFromStream(fin);
-    }
+        if (p == 0) {
+            cout << c;
+        } else if (p == 1) {
+            if (c == 1) cout << "x";
+            else cout << c << "x";
+        } else {
+            if (c == 1) cout << "x^" << p;
+            else cout << c << "x^" << p;
+        }
 
-    cout << "\nПерший поліном:\n";
-    userPoly1.print();
-    cout << "Другий поліном:\n";
-    userPoly2.print();
-
-    // ====== 3. Конвертуємо обидва у формат utils.h ======
-    Poly A = make_empty_poly();
-    Node* cur = userPoly1.head;
-    while (cur) {
-        insert_mono(A, cur->data.coef, cur->data.power);
         cur = cur->next;
     }
+    cout << "\n";
+}
 
-    Poly Bp = make_empty_poly();
-    cur = userPoly2.head;
+void Polynomial::clear() {
+    Node* cur = head;
     while (cur) {
-        insert_mono(Bp, cur->data.coef, cur->data.power);
+        Node* tmp = cur;
         cur = cur->next;
+        delete tmp;
+    }
+    head = nullptr;
+}
+
+// ================== Допоміжні функції ==================
+
+void removeSpaces(char* s) {
+    int j = 0;
+    for (int i = 0; s[i] != '\0'; ++i) {
+        if (!isspace((unsigned char)s[i]))
+            s[j++] = s[i];
+    }
+    s[j] = '\0';
+}
+
+double readNumber(const char* term, int& len) {
+    int i = 0;
+    char buf[64];
+    int bpos = 0;
+    bool hasDigit = false;
+    bool hasDot = false;
+
+    // опційний знак
+    if (term[i] == '+' || term[i] == '-') {
+        buf[bpos++] = term[i];
+        i++;
     }
 
-    cout << "\nУ форматі utils.h:\n";
-    cout << "A(x) = "; print_poly(A); cout << "\n";
-    cout << "B(x) = "; print_poly(Bp); cout << "\n";
+    // цифри і, можливо, одна крапка
+    while (isdigit((unsigned char)term[i]) || (term[i] == '.' && !hasDot)) {
+        if (term[i] == '.') hasDot = true;
+        else hasDigit = true;
+        buf[bpos++] = term[i];
+        i++;
+    }
 
-    // ====== 4. Операції ======
-    Poly AB_sum = add(A, Bp);
-    cout << "A + B = "; print_poly(AB_sum); cout << "\n";
+    buf[bpos] = '\0';
+    len = i;
 
-    Poly AB_sub = sub(A, Bp);
-    cout << "A - B = "; print_poly(AB_sub); cout << "\n";
+    if (!hasDigit) {
+        len = 0;
+        return 0.0;
+    }
 
-    Poly AB_mul = mul(A, Bp);
-    cout << "A * B = "; print_poly(AB_mul); cout << "\n";
+    return atof(buf);
+}
 
-    cout << "Введіть n для A^n: ";
-    int n;
-    cin >> n;
-    Poly A_pow = power(A, n);
-    cout << "A^" << n << " = "; print_poly(A_pow); cout << "\n";
+Monom parseFactor(const char* s, int& consumed) {
+    Monom m;
+    m.coef = 1.0;
+    m.power = 0;
 
-    // ====== 5. Прибираємо пам'ять ======
-    clear_poly(A);
-    clear_poly(Bp);
-    clear_poly(AB_sum);
-    clear_poly(AB_sub);
-    clear_poly(AB_mul);
-    clear_poly(A_pow);
+    int i = 0;
+    int lenNum = 0;
 
-    userPoly1.clear();
-    userPoly2.clear();
+    // може починатися з числа (знаком або без)
+    if (isdigit((unsigned char)s[i]) || s[i] == '.' || s[i] == '+' || s[i] == '-') {
+        double num = readNumber(s + i, lenNum);
+        if (lenNum > 0) {
+            m.coef = num;
+            i += lenNum;
+        }
+    }
 
-    return 0;
+    // змінна x і степінь
+    if (s[i] == 'x') {
+        i++;
+        if (s[i] == '^') {
+            i++;
+            int power = 0;
+            while (isdigit((unsigned char)s[i])) {
+                power = power * 10 + (s[i] - '0');
+                i++;
+            }
+            m.power = power;
+        } else {
+            m.power = 1;
+        }
+    }
+
+    consumed = i;
+    return m;
+}
+
+Monom parseTerm(const char* term) {
+    Monom result;
+    result.coef = 0;
+    result.power = 0;
+
+    int i = 0;
+
+    int termSign = 1;
+    if (term[i] == '+') {
+        i++;
+    } else if (term[i] == '-') {
+        termSign = -1;
+        i++;
+    }
+
+    int consumed = 0;
+    Monom fac = parseFactor(term + i, consumed);
+    double accCoef = fac.coef;
+    int accPower = fac.power;
+    i += consumed;
+
+    // обробка * і /
+    while (term[i] == '*' || term[i] == '/') {
+        char op = term[i];
+        i++;
+        Monom fac2 = parseFactor(term + i, consumed);
+        i += consumed;
+
+        if (op == '*') {
+            accCoef *= fac2.coef;
+            accPower += fac2.power;
+        } else {
+            accCoef /= fac2.coef;
+            accPower -= fac2.power;
+        }
+    }
+
+    result.coef = termSign * accCoef;
+    result.power = accPower;
+    return result;
+}
+
+// ================== Зчитування полінома ==================
+
+// 1) зчитування з будь-якого потоку (файл / cin / stringstream)
+Polynomial inputPolynomialFromStream(std::istream& in) {
+    char input[256];
+
+    if (!in.getline(input, 256)) {
+        // нічого не прочитали — повертаємо порожній поліном
+        return Polynomial();
+    }
+
+    removeSpaces(input);
+
+    // додаємо знак, якщо його нема
+    char expr[260];
+    if (input[0] != '+' && input[0] != '-') {
+        expr[0] = '+';
+        strcpy(expr + 1, input);
+    } else {
+        strcpy(expr, input);
+    }
+
+    Polynomial poly;
+    int i = 0;
+    int tpos = 0;
+    char term[100];
+
+    while (expr[i] != '\0') {
+        if ((expr[i] == '+' || expr[i] == '-') && i != 0) {
+            term[tpos] = '\0';
+            Monom m = parseTerm(term);
+            poly.addMonom(m);
+            tpos = 0;
+            term[tpos++] = expr[i];
+        } else {
+            term[tpos++] = expr[i];
+        }
+        i++;
+    }
+
+    // останній терм
+    term[tpos] = '\0';
+    Monom last = parseTerm(term);
+    poly.addMonom(last);
+
+    return poly;
+}
+
+// 2) зчитування з консолі — просто обгортка
+Polynomial inputPolynomial() {
+    return inputPolynomialFromStream(std::cin);
 }
