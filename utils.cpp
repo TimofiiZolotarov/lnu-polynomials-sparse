@@ -115,3 +115,27 @@ Poly power(Poly P, unsigned k) {
     clear_poly(base);
     return res;
 }
+
+// A / B = Q (частка) + R (остача)
+void div(const Poly& A, const Poly& B, Poly& Q, Poly& R)
+{
+    clear_poly(Q);
+    clear_poly(R);
+    if (is_zero(B)) {
+        cout << "Помилка: ділення на нульовий поліном!" << endl;
+        return;
+    }
+    
+    R = clone(A);
+
+    while (!is_zero(R) && R.head->power >= B.head->power) {
+		double term_coef = R.head->coef / B.head->coef;
+        unsigned term_power = R.head->power - B.head->power;
+		insert_mono(Q, term_coef, term_power);
+        for(const Mono* b_node = B.head; b_node != nullptr; b_node = b_node->next) {
+            double new_coef = term_coef * b_node->coef;
+			unsigned new_power = term_power + b_node->power;
+			insert_mono(R, -new_coef, new_power);
+		}
+    }
+}
