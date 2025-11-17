@@ -139,3 +139,21 @@ void div(const Poly& A, const Poly& B, Poly& Q, Poly& R)
 		}
     }
 }
+
+// Похідна полінома
+Poly derivative(const Poly& P) {
+    Poly R = make_empty_poly();
+    const Mono* cur = P.head;
+
+    while (cur) {
+        // Похідна від x^n це n*x^(n-1).
+        // Якщо степінь 0 (константа), то похідна 0 (ми її пропускаємо).
+        if (cur->power > 0) {
+            double new_coef = cur->coef * cur->power;
+            unsigned new_power = cur->power - 1;
+            insert_mono(R, new_coef, new_power);
+        }
+        cur = cur->next;
+    }
+    return R;
+}
