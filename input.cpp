@@ -5,6 +5,12 @@
 #include <cctype>
 using namespace std;
 
+// Константи для розмірів буферів
+const int MAX_INPUT_SIZE = 256;   // Максимальний розмір одного полінома
+const int MAX_LINE_SIZE = 512;    // Максимальний розмір рядка для двох поліномів
+const int MAX_TERM_SIZE = 100;    // Максимальний розмір одного терма (члена)
+const int MAX_NUMBER_SIZE = 64;   // Максимальний розмір числа
+
 Polynomial::Polynomial() {
     head = nullptr;
 }
@@ -13,20 +19,24 @@ void Polynomial::addMonom(Monom m) {
     if (m.coef == 0.0) return;
     Node* newNode = new Node{m, nullptr};
 
+    // Якщо список порожній, новий моном стає головою
     if (!head) {
         head = newNode;
         return;
     }
 
+    // Якщо степінь нового монома більша за голову - вставляємо на початок
     if (m.power > head->data.power) {
         newNode->next = head;
         head = newNode;
         return;
     }
 
+    // Якщо степінь співпадає з головою - додаємо коефіцієнти
     if (m.power == head->data.power) {
         head->data.coef += m.coef;
         delete newNode;
+        // Якщо після додавання коефіцієнт став 0 - видаляємо моном
         if (head->data.coef == 0.0) {
             Node* tmp = head;
             head = head->next;
@@ -35,8 +45,10 @@ void Polynomial::addMonom(Monom m) {
         return;
     }
 
+    // Шукаємо відповідне місце для вставки (підтримуємо впорядкування)
     Node* cur = head;
     while (cur->next && cur->next->data.power >= m.power) {
+        // Якщо знайшли моном з таким самим степенем
         if (cur->next->data.power == m.power) {
             cur->next->data.coef += m.coef;
             delete newNode;
@@ -50,6 +62,7 @@ void Polynomial::addMonom(Monom m) {
         cur = cur->next;
     }
 
+    // Вставляємо новий моном у відповідне місце
     newNode->next = cur->next;
     cur->next = newNode;
 }
@@ -66,6 +79,7 @@ void Polynomial::print() {
         double c = cur->data.coef;
         int    p = cur->data.power;
 
+        // Виводимо знак (для не першого члена)
         if (!first) {
             if (c >= 0) cout << " + ";
             else { cout << " - "; c = -c; }
@@ -74,11 +88,12 @@ void Polynomial::print() {
             first = false;
         }
 
-        if (p == 0)
+        // Вивід члена в залежності від степеня
+        if (p == 0)  // Константа
             cout << c;
-        else if (p == 1)
+        else if (p == 1)  // Лінійний член
             (c == 1) ? cout << "x" : cout << c << "x";
-        else
+        else  // Степеневий член
             (c == 1) ? cout << "x^" << p : cout << c << "x^" << p;
 
         cur = cur->next;
@@ -96,7 +111,8 @@ void Polynomial::clear() {
     head = nullptr;
 }
 
-// ================== Допоміжні функції парсера ==================
+//  Допоміжні функції парсера
+
 
 void removeSpaces(char* s) {
     int j = 0;
@@ -109,16 +125,18 @@ void removeSpaces(char* s) {
 
 double readNumber(const char* term, int& len) {
     int i = 0;
-    char buf[64];
+    char buf[MAX_NUMBER_SIZE];
     int  bpos = 0;
     bool hasDigit = false;
     bool hasDot   = false;
 
+    // Обробляємо знак числа
     if (term[i] == '+' || term[i] == '-') {
         buf[bpos++] = term[i];
         i++;
     }
 
+    // Зчитуємо цифри та десяткову крапку
     while (isdigit((unsigned char)term[i]) || (term[i] == '.' && !hasDot)) {
         if (term[i] == '.') hasDot = true;
         else hasDigit = true;
@@ -145,6 +163,7 @@ Monom parseFactor(const char* s, int& consumed) {
     int i      = 0;
     int lenNum = 0;
 
+    // Спробуємо зчитати коефіцієнт
     if (isdigit((unsigned char)s[i]) || s[i] == '.' ||
         s[i] == '+' || s[i] == '-') {
         double num = readNumber(s + i, lenNum);
@@ -154,9 +173,10 @@ Monom parseFactor(const char* s, int& consumed) {
         }
     }
 
+    // Обробляємо змінну x та її степінь
     if (s[i] == 'x') {
         i++;
-        if (s[i] == '^') {
+        if (s[i] == '^') {  // Читаємо показник степеня
             i++;
             int power = 0;
             while (isdigit((unsigned char)s[i])) {
@@ -164,7 +184,7 @@ Monom parseFactor(const char* s, int& consumed) {
                 i++;
             }
             m.power = power;
-        } else {
+        } else {  // x без степеня означає x^1
             m.power = 1;
         }
     }
@@ -180,6 +200,7 @@ Monom parseTerm(const char* term) {
 
     int i = 0;
 
+    // Визначаємо знак терма
     int termSign = 1;
     if (term[i] == '+') {
         i++;
@@ -188,12 +209,14 @@ Monom parseTerm(const char* term) {
         i++;
     }
 
+    // Парсимо перший фактор
     int   consumed = 0;
     Monom fac      = parseFactor(term + i, consumed);
     double accCoef  = fac.coef;
     int    accPower = fac.power;
     i += consumed;
 
+    // Обробляємо операції множення та ділення
     while (term[i] == '*' || term[i] == '/') {
         char op = term[i];
         i++;
@@ -202,10 +225,10 @@ Monom parseTerm(const char* term) {
 
         if (op == '*') {
             accCoef  *= fac2.coef;
-            accPower += fac2.power;
+            accPower += fac2.power;  // При множенні степені додаються
         } else {
             accCoef  /= fac2.coef;
-            accPower -= fac2.power;
+            accPower -= fac2.power;  // При діленні степені віднімаються
         }
     }
 
@@ -217,14 +240,17 @@ Monom parseTerm(const char* term) {
 // ===== Парсинг цілого полінома з C-рядка (один поліном) =====
 
 static Polynomial parsePolynomialFromCStr(const char* original) {
-    char input[256];
+    char input[MAX_INPUT_SIZE];
 
-    std::strncpy(input, original, 255);
-    input[255] = '\0';
+    // Копіюємо вхідний рядок у буфер з обмеженням розміру
+    std::strncpy(input, original, MAX_INPUT_SIZE - 1);
+    input[MAX_INPUT_SIZE - 1] = '\0';
 
+    // Видаляємо всі пробіли
     removeSpaces(input);
 
-    char expr[260];
+    // Нормалізуємо вираз: додаємо '+' на початку, якщо немає знака
+    char expr[MAX_INPUT_SIZE + 4]; // +4 для можливості додати '+' на початку
     if (input[0] != '+' && input[0] != '-') {
         expr[0] = '+';
         std::strcpy(expr + 1, input);
@@ -235,9 +261,11 @@ static Polynomial parsePolynomialFromCStr(const char* original) {
     Polynomial poly;
     int  i    = 0;
     int  tpos = 0;
-    char term[100];
+    char term[MAX_TERM_SIZE];
 
+    // Розбиваємо вираз на терми за знаками + та -
     while (expr[i] != '\0') {
+        // Знайшли початок нового терма
         if ((expr[i] == '+' || expr[i] == '-') && i != 0) {
             term[tpos] = '\0';
             Monom m = parseTerm(term);
@@ -250,6 +278,7 @@ static Polynomial parsePolynomialFromCStr(const char* original) {
         i++;
     }
 
+    // Обробляємо останній терм
     term[tpos] = '\0';
     Monom last = parseTerm(term);
     poly.addMonom(last);
@@ -257,12 +286,43 @@ static Polynomial parsePolynomialFromCStr(const char* original) {
     return poly;
 }
 
+static bool splitByComma(const char* line, char* part1, char* part2, int maxSize) {
+    // Знаходимо позицію коми
+    int commaPos = -1;
+    for (int i = 0; line[i] != '\0'; ++i) {
+        if (line[i] == ',') {
+            commaPos = i;
+            break;
+        }
+    }
+
+    if (commaPos == -1) {
+        return false; // немає коми
+    }
+
+    // Копіюємо перший поліном (до коми)
+    int i;
+    for (i = 0; i < commaPos && i < maxSize - 1; ++i) {
+        part1[i] = line[i];
+    }
+    part1[i] = '\0';
+
+    // Копіюємо другий поліном (після коми)
+    int j = 0;
+    for (i = commaPos + 1; line[i] != '\0' && j < maxSize - 1; ++i, ++j) {
+        part2[j] = line[i];
+    }
+    part2[j] = '\0';
+
+    return true;
+}
+
 // ===== 1) зчитати ОДИН поліном з КОНСОЛІ =====
 
 Polynomial inputPolynomial() {
-    char input[256];
+    char input[MAX_INPUT_SIZE];
     cout << "Введіть поліном (напр. 3x^2 - 2x + x*x/2 - 4):\n";
-    cin.getline(input, 256);
+    cin.getline(input, MAX_INPUT_SIZE);
 
     return parsePolynomialFromCStr(input);
 }
@@ -278,40 +338,17 @@ bool readTwoPolynomialsFromFile(const char* fileName,
         return false;
     }
 
-    char line[512];
-    if (!fin.getline(line, 512)) {
+    char line[MAX_LINE_SIZE];
+    if (!fin.getline(line, MAX_LINE_SIZE)) {
         return false;
     }
 
-    int commaPos = -1;
-    for (int i = 0; line[i] != '\0'; ++i) {
-        if (line[i] == ',') {
-            commaPos = i;
-            break;
-        }
+    char part1[MAX_INPUT_SIZE];
+    char part2[MAX_INPUT_SIZE];
+
+    if (!splitByComma(line, part1, part2, MAX_INPUT_SIZE)) {
+        return false;
     }
-
-    if (commaPos == -1) {
-        return false; // немає коми
-    }
-
-    char part1[256];
-    char part2[256];
-
-    int i, j;
-
-    // перший поліном (до коми)
-    for (i = 0; i < commaPos && i < 255; ++i) {
-        part1[i] = line[i];
-    }
-    part1[i] = '\0';
-
-    // другий поліном (після коми)
-    j = 0;
-    for (i = commaPos + 1; line[i] != '\0' && j < 255; ++i, ++j) {
-        part2[j] = line[i];
-    }
-    part2[j] = '\0';
 
     P1 = parsePolynomialFromCStr(part1);
     P2 = parsePolynomialFromCStr(part2);
@@ -324,63 +361,22 @@ bool readTwoPolynomialsFromFile(const char* fileName,
 bool readTwoPolynomialsFromCin(Polynomial& P1,
                                Polynomial& P2)
 {
-    char line[512];
+    char line[MAX_LINE_SIZE];
 
     cout << "Введіть ДВА поліноми в одному рядку, розділені комою:\n";
     // приклад: 3x^2 - 2x + 1, -x^3 + 5x
 
-    cin.getline(line, 512);
+    cin.getline(line, MAX_LINE_SIZE);
 
-    int commaPos = -1;
-    for (int i = 0; line[i] != '\0'; ++i) {
-        if (line[i] == ',') {
-            commaPos = i;
-            break;
-        }
+    char part1[MAX_INPUT_SIZE];
+    char part2[MAX_INPUT_SIZE];
+
+    if (!splitByComma(line, part1, part2, MAX_INPUT_SIZE)) {
+        return false;
     }
-
-    if (commaPos == -1) {
-        return false; // немає коми
-    }
-
-    char part1[256];
-    char part2[256];
-
-    int i, j;
-
-    // перший поліном (до коми)
-    for (i = 0; i < commaPos && i < 255; ++i) {
-        part1[i] = line[i];
-    }
-    part1[i] = '\0';
-
-    // другий поліном (після worm)
-    j = 0;
-    for (i = commaPos + 1; line[i] != '\0' && j < 255; ++i, ++j) {
-        part2[j] = line[i];
-    }
-    part2[j] = '\0';
 
     P1 = parsePolynomialFromCStr(part1);
     P2 = parsePolynomialFromCStr(part2);
 
     return true;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//wormyworm
