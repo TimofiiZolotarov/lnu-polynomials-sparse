@@ -1,5 +1,6 @@
 #include "input.h"
 #include <iostream>
+#include <fstream>
 #include <cstring>
 #include <cctype>
 using namespace std;
@@ -12,7 +13,10 @@ void Polynomial::addMonom(Monom m) {
     if (m.coef == 0.0) return;
     Node* newNode = new Node{m, nullptr};
 
-    if (!head) { head = newNode; return; }
+    if (!head) {
+        head = newNode;
+        return;
+    }
 
     if (m.power > head->data.power) {
         newNode->next = head;
@@ -51,13 +55,16 @@ void Polynomial::addMonom(Monom m) {
 }
 
 void Polynomial::print() {
-    if (!head) { cout << "0\n"; return; }
+    if (!head) {
+        cout << "0\n";
+        return;
+    }
 
     Node* cur = head;
     bool first = true;
     while (cur) {
         double c = cur->data.coef;
-        int p = cur->data.power;
+        int    p = cur->data.power;
 
         if (!first) {
             if (c >= 0) cout << " + ";
@@ -89,20 +96,23 @@ void Polynomial::clear() {
     head = nullptr;
 }
 
+// ================== Допоміжні функції парсера ==================
+
 void removeSpaces(char* s) {
     int j = 0;
-    for (int i = 0; s[i] != '\0'; ++i)
+    for (int i = 0; s[i] != '\0'; ++i) {
         if (!isspace((unsigned char)s[i]))
             s[j++] = s[i];
+    }
     s[j] = '\0';
 }
 
 double readNumber(const char* term, int& len) {
     int i = 0;
     char buf[64];
-    int bpos = 0;
+    int  bpos = 0;
     bool hasDigit = false;
-    bool hasDot = false;
+    bool hasDot   = false;
 
     if (term[i] == '+' || term[i] == '-') {
         buf[bpos++] = term[i];
@@ -119,18 +129,29 @@ double readNumber(const char* term, int& len) {
     buf[bpos] = '\0';
     len = i;
 
-    if (!hasDigit) { len = 0; return 0.0; }
+    if (!hasDigit) {
+        len = 0;
+        return 0.0;
+    }
 
     return atof(buf);
 }
 
 Monom parseFactor(const char* s, int& consumed) {
-    Monom m{1.0, 0};
-    int i = 0, lenNum = 0;
+    Monom m;
+    m.coef  = 1.0;
+    m.power = 0;
 
-    if (isdigit((unsigned char)s[i]) || s[i] == '.' || s[i] == '+' || s[i] == '-') {
+    int i      = 0;
+    int lenNum = 0;
+
+    if (isdigit((unsigned char)s[i]) || s[i] == '.' ||
+        s[i] == '+' || s[i] == '-') {
         double num = readNumber(s + i, lenNum);
-        if (lenNum > 0) { m.coef = num; i += lenNum; }
+        if (lenNum > 0) {
+            m.coef = num;
+            i += lenNum;
+        }
     }
 
     if (s[i] == 'x') {
@@ -143,7 +164,9 @@ Monom parseFactor(const char* s, int& consumed) {
                 i++;
             }
             m.power = power;
-        } else m.power = 1;
+        } else {
+            m.power = 1;
+        }
     }
 
     consumed = i;
@@ -151,17 +174,24 @@ Monom parseFactor(const char* s, int& consumed) {
 }
 
 Monom parseTerm(const char* term) {
-    Monom result{0, 0};
+    Monom result;
+    result.coef  = 0;
+    result.power = 0;
+
     int i = 0;
 
     int termSign = 1;
-    if (term[i] == '+') i++;
-    else if (term[i] == '-') { termSign = -1; i++; }
+    if (term[i] == '+') {
+        i++;
+    } else if (term[i] == '-') {
+        termSign = -1;
+        i++;
+    }
 
-    int consumed = 0;
-    Monom fac = parseFactor(term + i, consumed);
-    double accCoef = fac.coef;
-    int accPower = fac.power;
+    int   consumed = 0;
+    Monom fac      = parseFactor(term + i, consumed);
+    double accCoef  = fac.coef;
+    int    accPower = fac.power;
     i += consumed;
 
     while (term[i] == '*' || term[i] == '/') {
@@ -171,34 +201,40 @@ Monom parseTerm(const char* term) {
         i += consumed;
 
         if (op == '*') {
-            accCoef *= fac2.coef;
+            accCoef  *= fac2.coef;
             accPower += fac2.power;
         } else {
-            accCoef /= fac2.coef;
+            accCoef  /= fac2.coef;
             accPower -= fac2.power;
         }
     }
 
-    result.coef = termSign * accCoef;
+    result.coef  = termSign * accCoef;
     result.power = accPower;
     return result;
 }
 
-Polynomial inputPolynomial() {
+// ===== Парсинг цілого полінома з C-рядка (один поліном) =====
+
+static Polynomial parsePolynomialFromCStr(const char* original) {
     char input[256];
-    cout << "Введіть поліном (напр. 3x^2 - 2x + x*x/2 - 4):\n";
-    cin.getline(input, 256);
+
+    std::strncpy(input, original, 255);
+    input[255] = '\0';
 
     removeSpaces(input);
 
     char expr[260];
     if (input[0] != '+' && input[0] != '-') {
         expr[0] = '+';
-        strcpy(expr + 1, input);
-    } else strcpy(expr, input);
+        std::strcpy(expr + 1, input);
+    } else {
+        std::strcpy(expr, input);
+    }
 
     Polynomial poly;
-    int i = 0, tpos = 0;
+    int  i    = 0;
+    int  tpos = 0;
     char term[100];
 
     while (expr[i] != '\0') {
@@ -220,3 +256,131 @@ Polynomial inputPolynomial() {
 
     return poly;
 }
+
+// ===== 1) зчитати ОДИН поліном з КОНСОЛІ =====
+
+Polynomial inputPolynomial() {
+    char input[256];
+    cout << "Введіть поліном (напр. 3x^2 - 2x + x*x/2 - 4):\n";
+    cin.getline(input, 256);
+
+    return parsePolynomialFromCStr(input);
+}
+
+// ===== 2) зчитати ДВА поліноми з ФАЙЛУ, в одному рядку через кому =====
+
+bool readTwoPolynomialsFromFile(const char* fileName,
+                                Polynomial& P1,
+                                Polynomial& P2)
+{
+    ifstream fin(fileName);
+    if (!fin) {
+        return false;
+    }
+
+    char line[512];
+    if (!fin.getline(line, 512)) {
+        return false;
+    }
+
+    int commaPos = -1;
+    for (int i = 0; line[i] != '\0'; ++i) {
+        if (line[i] == ',') {
+            commaPos = i;
+            break;
+        }
+    }
+
+    if (commaPos == -1) {
+        return false; // немає коми
+    }
+
+    char part1[256];
+    char part2[256];
+
+    int i, j;
+
+    // перший поліном (до коми)
+    for (i = 0; i < commaPos && i < 255; ++i) {
+        part1[i] = line[i];
+    }
+    part1[i] = '\0';
+
+    // другий поліном (після коми)
+    j = 0;
+    for (i = commaPos + 1; line[i] != '\0' && j < 255; ++i, ++j) {
+        part2[j] = line[i];
+    }
+    part2[j] = '\0';
+
+    P1 = parsePolynomialFromCStr(part1);
+    P2 = parsePolynomialFromCStr(part2);
+
+    return true;
+}
+
+// ===== 3) зчитати ДВА поліноми з КЛАВІАТУРИ, в одному рядку через кому =====
+
+bool readTwoPolynomialsFromCin(Polynomial& P1,
+                               Polynomial& P2)
+{
+    char line[512];
+
+    cout << "Введіть ДВА поліноми в одному рядку, розділені комою:\n";
+    // приклад: 3x^2 - 2x + 1, -x^3 + 5x
+
+    cin.getline(line, 512);
+
+    int commaPos = -1;
+    for (int i = 0; line[i] != '\0'; ++i) {
+        if (line[i] == ',') {
+            commaPos = i;
+            break;
+        }
+    }
+
+    if (commaPos == -1) {
+        return false; // немає коми
+    }
+
+    char part1[256];
+    char part2[256];
+
+    int i, j;
+
+    // перший поліном (до коми)
+    for (i = 0; i < commaPos && i < 255; ++i) {
+        part1[i] = line[i];
+    }
+    part1[i] = '\0';
+
+    // другий поліном (після коми)
+    j = 0;
+    for (i = commaPos + 1; line[i] != '\0' && j < 255; ++i, ++j) {
+        part2[j] = line[i];
+    }
+    part2[j] = '\0';
+
+    P1 = parsePolynomialFromCStr(part1);
+    P2 = parsePolynomialFromCStr(part2);
+
+    return true;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//wormyworm
