@@ -63,7 +63,7 @@ int main() {
     P2.print();
     cout << "\n";
 
-    // Конвертуємо у формат Poly (utils.h)
+    // Конвертуємо у формат Poly (worms.h)
     Poly A = toPoly(P1);
     Poly B = toPoly(P2);
 
