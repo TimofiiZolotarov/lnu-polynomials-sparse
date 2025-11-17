@@ -115,6 +115,24 @@ int main() {
         cout << "P1(" << x0 << ") = " << v1 << endl;
         cout << "P2(" << x0 << ") = " << v2 << endl;
     }
+        else if (op == 6) {
+        // Рахуємо похідні
+        Poly DerA = derivative(A);
+        Poly DerB = derivative(B);
+
+        // Виводимо результат
+        cout << "\nP1'(x) = ";
+        print_poly(DerA);
+        cout << endl;
+
+        cout << "P2'(x) = ";
+        print_poly(DerB);
+        cout << endl;
+
+        // Очищаємо пам'ять
+        clear_poly(DerA);
+        clear_poly(DerB);
+    }
     else {
         cout << "\nНевірний вибір дії." << endl;
     }
