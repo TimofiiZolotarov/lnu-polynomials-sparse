@@ -110,7 +110,7 @@ static Poly make_const(double c) {
     return R;
 }
 
-// додавання Nastya
+// додавання Nastia
 Poly add(const Poly& A, const Poly& B) {
     Poly R = make_empty_poly();
     for (const Mono* a = A.head; a; a = a->next)
@@ -142,7 +142,7 @@ Poly mul(const Poly& A, const Poly& B) {
     return R;
 }
 
-// Піднесення в степінь Dima
+// Піднесення в степінь Nastia
 Poly power(Poly P, unsigned k) {
     if (k == 0) return make_const(1.0);
     if (k == 1) return clone(P);
