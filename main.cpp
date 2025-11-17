@@ -4,19 +4,19 @@
 
 using namespace std;
 
-// Допоміжна функція: перетворити Polynomial (input.h) -> Poly (utils.h)
+// Перетворити Polynomial (input.h) -> Poly (utils.h)
 Poly toPoly(const Polynomial& src) {
-    Poly res = make_empty_poly();
+    Poly  res = make_empty_poly();
     Node* cur = src.head;
     while (cur) {
-        double coef = cur->data.coef;
-        int power  = cur->data.power;
+        double coef  = cur->data.coef;
+        int    power = cur->data.power;
 
         if (power < 0) {
-            cerr << "Увага: моном з відʼємним степенем " << power
-                 << " пропущено під час перетворення у Poly\n";
+            cerr << "Увага: моном з відʼємним степенем "
+                 << power << " пропущено.\n";
         } else if (coef != 0.0) {
-            insert_mono(res, coef, static_cast<unsigned>(power));
+            insert_mono(res, coef, (unsigned)power);
         }
 
         cur = cur->next;
@@ -25,122 +25,132 @@ Poly toPoly(const Polynomial& src) {
 }
 
 int main() {
-    // 1. Зчитуємо два поліноми
-    cout << "Введіть перший поліном (напр. 3x^2 - 2x + x*x/2 - 4):" << endl;
-    Polynomial P1 = inputPolynomial();
+    Polynomial P1;
+    Polynomial P2;
 
-    cout << "Введіть другий поліном:" << endl;
-    Polynomial P2 = inputPolynomial();
+    cout << "Звідки зчитувати поліноми?\n";
+    cout << "1 - З клавіатури\n";
+    cout << "2 - З файлу \n";
+    cout << "Ваш вибір: ";
+
+    int mode;
+    cin >> mode;
+    cin.ignore(); // прибрати '\n' після числа
+
+    if (mode == 1) {
+        // з КЛАВІАТУРИ: два поліноми в одному рядку через кому
+        if (!readTwoPolynomialsFromCin(P1, P2)) {
+            cout << "Помилка введення: немає коми або рядок некоректний.\n";
+            return 1;
+        }
+    } else {
+        // з ФАЙЛУ: два поліноми в одному рядку через кому
+        char fname[256];
+        cout << "Введіть назву файла (наприклад polys.txt): ";
+        cin.getline(fname, 256);
+
+        if (!readTwoPolynomialsFromFile(fname, P1, P2)) {
+            cout << "Помилка читання поліномів з файлу!\n";
+            return 1;
+        }
+    }
 
     cout << "\nP1(x) = ";
     P1.print();
-    cout << endl;
+    cout << "\n";
 
     cout << "P2(x) = ";
     P2.print();
-    cout << endl;
+    cout << "\n";
 
-    // 2. Конвертуємо у структуру Poly з utils.h
+    // Конвертуємо у формат Poly (utils.h)
     Poly A = toPoly(P1);
     Poly B = toPoly(P2);
 
-    // 3. Меню дій
-    cout << "\nОберіть дію над поліномами:" << endl;
-    cout << "1 - P1(x) + P2(x)" << endl;
-    cout << "2 - P1(x) - P2(x)" << endl;
-    cout << "3 - P1(x) * P2(x)" << endl;
-    cout << "4 - P1(x) / P2(x) (частка і остача)" << endl;
-    cout << "5 - Обчислити значення P1(x0) та P2(x0)" << endl;
+    cout << "\nОберіть дію над поліномами:\n";
+    cout << "1 - P1(x) + P2(x)\n";
+    cout << "2 - P1(x) - P2(x)\n";
+    cout << "3 - P1(x) * P2(x)\n";
+    cout << "4 - P1(x) / P2(x) (частка і остача)\n";
+    cout << "5 - Обчислити значення P1(x0)\n";
+    cout << "6 - Похідна P1'(x)\n";
     cout << "Ваш вибір: ";
 
     int op;
     cin >> op;
+    cin.ignore(); // '\n'
 
-    if (op == 1) {
-        // Сума
-        Poly Sum = add(A, B);
-        cout << "\nP1(x) + P2(x) = ";
-        print_poly(Sum);
-        cout << endl;
-        clear_poly(Sum);
-    }
-    else if (op == 2) {
-        // Різниця
-        Poly Diff = sub(A, B);
-        cout << "\nP1(x) - P2(x) = ";
-        print_poly(Diff);
-        cout << endl;
-        clear_poly(Diff);
-    }
-    else if (op == 3) {
-        // Добуток
-        Poly Prod = mul(A, B);
-        cout << "\nP1(x) * P2(x) = ";
-        print_poly(Prod);
-        cout << endl;
-        clear_poly(Prod);
-    }
-    else if (op == 4) {
-        // Ділення
-        cout << "\nP1(x) / P2(x):" << endl;
-        if (is_zero(B)) {
-            cout << "Помилка: ділення на нульовий поліном!" << endl;
-        } else {
-            Poly Q = make_empty_poly();
-            Poly R = make_empty_poly();
-
-            div(A, B, Q, R);
-
-            cout << "Q(x) = ";
-            print_poly(Q);
-            cout << endl;
-
-            cout << "R(x) = ";
-            print_poly(R);
-            cout << endl;
-
-            clear_poly(Q);
-            clear_poly(R);
+    switch (op) {
+        case 1: {
+            Poly Sum = add(A, B);
+            cout << "\nP1(x) + P2(x) = ";
+            print_poly(Sum);
+            cout << "\n";
+            clear_poly(Sum);
+            break;
         }
+        case 2: {
+            Poly Diff = sub(A, B);
+            cout << "\nP1(x) - P2(x) = ";
+            print_poly(Diff);
+            cout << "\n";
+            clear_poly(Diff);
+            break;
+        }
+        case 3: {
+            Poly Prod = mul(A, B);
+            cout << "\nP1(x) * P2(x) = ";
+            print_poly(Prod);
+            cout << "\n";
+            clear_poly(Prod);
+            break;
+        }
+        case 4: {
+            cout << "\nP1(x) / P2(x):\n";
+            if (is_zero(B)) {
+                cout << "Помилка: ділення на нульовий поліном!\n";
+            } else {
+                Poly Q = make_empty_poly();
+                Poly R = make_empty_poly();
+
+                div(A, B, Q, R);
+
+                cout << "Q(x) = ";
+                print_poly(Q);
+                cout << "\n";
+
+                cout << "R(x) = ";
+                print_poly(R);
+                cout << "\n";
+
+                clear_poly(Q);
+                clear_poly(R);
+            }
+            break;
+        }
+        case 5: {
+            double x0;
+            cout << "\nВведіть значення x0: ";
+            cin >> x0;
+
+            double v1 = value(A, x0);
+            cout << "P1(" << x0 << ") = " << v1 << "\n";
+            break;
+        }
+        case 6: {
+            Poly D = derivative(A); // похідна в utils.cpp
+            cout << "\nP1'(x) = ";
+            print_poly(D);
+            cout << "\n";
+            clear_poly(D);
+            break;
+        }
+        default:
+            cout << "\nНевірний вибір дії.\n";
     }
-    else if (op == 5) {
-        // Обчислення значення в точці x0
-        double x0;
-        cout << "\nВведіть значення x0: ";
-        cin >> x0;
 
-        double v1 = value(A, x0);
-        double v2 = value(B, x0);
-
-        cout << "P1(" << x0 << ") = " << v1 << endl;
-        cout << "P2(" << x0 << ") = " << v2 << endl;
-    }
-        else if (op == 6) {
-        // Рахуємо похідні
-        Poly DerA = derivative(A);
-        Poly DerB = derivative(B);
-
-        // Виводимо результат
-        cout << "\nP1'(x) = ";
-        print_poly(DerA);
-        cout << endl;
-
-        cout << "P2'(x) = ";
-        print_poly(DerB);
-        cout << endl;
-
-        // Очищаємо пам'ять
-        clear_poly(DerA);
-        clear_poly(DerB);
-    }
-    else {
-        cout << "\nНевірний вибір дії." << endl;
-    }
-
-    // 4. Прибирання пам'яті
     clear_poly(A);
     clear_poly(B);
-
     P1.clear();
     P2.clear();
 
