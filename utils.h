@@ -30,5 +30,7 @@ Poly mul(const Poly& A, const Poly& B);     // A * B
 Poly power(Poly P, unsigned k);             // P^k (k >= 0)
 void div(const Poly& A, const Poly& B, Poly& Q, Poly& R);// A / B = Q (частка) + R (остача)
 
-Poly derivative(const Poly& P); // Похідна P'(x)
+// 🔹 нове: похідна
+Poly derivative(const Poly& P);             // P'(x)
+
 #endif // POLY_HPP
