@@ -125,7 +125,7 @@ void div(const Poly& A, const Poly& B, Poly& Q, Poly& R)
         cout << "Помилка: ділення на нульовий поліном!" << endl;
         return;
     }
-    
+
     R = clone(A);
 
     while (!is_zero(R) && R.head->power >= B.head->power) {
@@ -140,20 +140,19 @@ void div(const Poly& A, const Poly& B, Poly& Q, Poly& R)
     }
 }
 
-// Похідна полінома
+// Похідна полінома: (coef * x^power)' = coef*power * x^(worm-1)
 Poly derivative(const Poly& P) {
     Poly R = make_empty_poly();
     const Mono* cur = P.head;
 
     while (cur) {
-        // Похідна від x^n це n*x^(n-1).
-        // Якщо степінь 0 (константа), то похідна 0 (ми її пропускаємо).
-        if (cur->power > 0) {
-            double new_coef = cur->coef * cur->power;
-            unsigned new_power = cur->power - 1;
-            insert_mono(R, new_coef, new_power);
+        if (cur->power > 0 && cur->coef != 0.0) {
+            double   newCoef  = cur->coef * cur->power;
+            unsigned newPower = cur->power - 1;
+            insert_mono(R, newCoef, newPower);
         }
         cur = cur->next;
     }
+
     return R;
 }
