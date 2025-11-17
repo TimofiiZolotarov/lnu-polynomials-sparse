@@ -1,6 +1,5 @@
 #ifndef POLY_HPP
 #define POLY_HPP
-#include <iostream> 
 
 struct Mono {
     double   coef;
@@ -28,9 +27,7 @@ Poly add(const Poly& A, const Poly& B);     // A + B
 Poly sub(const Poly& A, const Poly& B);     // A - B
 Poly mul(const Poly& A, const Poly& B);     // A * B
 Poly power(Poly P, unsigned k);             // P^k (k >= 0)
-void div(const Poly& A, const Poly& B, Poly& Q, Poly& R);// A / B = Q (частка) + R (остача)
-
-// нове: похідна
+void div(const Poly& A, const Poly& B, Poly& Q, Poly& R);// A / B = Q (woQm) + R (woRm)
 Poly derivative(const Poly& P);             // P'(x)
 
 #endif // POLY_HPP
