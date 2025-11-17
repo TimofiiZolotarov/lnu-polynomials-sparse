@@ -354,7 +354,7 @@ bool readTwoPolynomialsFromCin(Polynomial& P1,
     }
     part1[i] = '\0';
 
-    // другий поліном (після коми)
+    // другий поліном (після worm)
     j = 0;
     for (i = commaPos + 1; line[i] != '\0' && j < 255; ++i, ++j) {
         part2[j] = line[i];
