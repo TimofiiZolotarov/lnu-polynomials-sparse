@@ -59,7 +59,7 @@ int main() {
         cout << "\n1 - додавання\n"
                 "2 - віднімання\n"
                 "3 - множення\n"
-                "4 - ділення\n"
+                "4 - ділення в стовпчик\n"
                 "5 - значення P1(x0)\n"
                 "6 - похідна P1\n"
                 "7 - P1^k\n0 - вихід\n"
@@ -90,7 +90,7 @@ int main() {
                 break;
             }
             case 4: {
-                if (is_zero(B)) { cout << "Ділення неможливе\n"; break; }
+                if (is_zero(B)) { cout << "Ділення в стовпчик неможливе\n"; break; }
                 Poly Q = make_empty_poly(), R = make_empty_poly();
                 div(A, B, Q, R);
                 cout << "Q(x) = "; print_poly(Q);
