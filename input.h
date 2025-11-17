@@ -1,9 +1,10 @@
 #ifndef INPUT_POLYNOMIAL_H
 #define INPUT_POLYNOMIAL_H
 
+// наші структури
 struct Monom {
     double coef;
-    int power;
+    int    power;
 };
 
 struct Node {
@@ -19,13 +20,23 @@ struct Polynomial {
     void clear();
 };
 
-// допоміжні функції
-void removeSpaces(char* s);
+// допоміжні функції парсера
+void   removeSpaces(char* s);
 double readNumber(const char* term, int& len);
-Monom parseFactor(const char* s, int& consumed);
-Monom parseTerm(const char* term);
+Monom  parseFactor(const char* s, int& consumed);
+Monom  parseTerm(const char* term);
 
-// головна функція вводу
+// 1) зчитати ОДИН worm з КОНСОЛІ (один worm)
 Polynomial inputPolynomial();
+
+// 2) зчитати ДВА worms з ФАЙЛУ, в одному рядку через кому
+// Повертає true, якщо успіх, false — якщо помилка
+bool readTwoPolynomialsFromFile(const char* fileName,
+                                Polynomial& P1,
+                                Polynomial& P2);
+
+// 3) зчитати ДВА поліноми з КЛАВІАТУРИ, в одному рядку через кому
+bool readTwoPolynomialsFromCin(Polynomial& P1,
+                               Polynomial& P2);
 
 #endif
