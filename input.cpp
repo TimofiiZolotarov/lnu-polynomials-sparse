@@ -11,10 +11,13 @@ const int MAX_LINE_SIZE = 512;    // Максимальний розмір ря�
 const int MAX_TERM_SIZE = 100;    // Максимальний розмір одного терма (члена)
 const int MAX_NUMBER_SIZE = 64;   // Максимальний розмір числа
 
+
+//пустий список
 Polynomial::Polynomial() {
     head = nullptr;
 }
 
+//якщо коєфіцієнт перед мономом 0, то моном зникає
 void Polynomial::addMonom(Monom m) {
     if (m.coef == 0.0) return;
     Node* newNode = new Node{m, nullptr};
@@ -356,7 +359,7 @@ bool readTwoPolynomialsFromFile(const char* fileName,
     return true;
 }
 
-// ===== 3) зчитати ДВА поліноми з КЛАВІАТУРИ, в одному рядку через кому =====
+// ===== 3) зчитати два поліноми з клавіатури, в одному рядку через кому =====
 
 bool readTwoPolynomialsFromCin(Polynomial& P1,
                                Polynomial& P2)
